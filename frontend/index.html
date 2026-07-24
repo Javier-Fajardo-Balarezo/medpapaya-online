@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MedPapaya | Diagnóstico Agropecuario</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="top-header">
+    <div class="logos-area">
+        <div class="logo-box">
+            <img src="../assets/unamad.jpeg" alt="Escudo de la UNAMAD" class="logo-img">
+        </div>
+
+        <div class="logo-box">
+            <img src="../assets/isi.jpeg" alt="Escudo de Ingeniería de Sistemas e Informática" class="logo-img">
+        </div>
+
+        <div class="logo-box papaya-logo">
+            <span>🍈</span>
+            <small>Papaya</small>
+        </div>
+    </div>
+
+    <nav class="nav-menu">
+            <a href="#inicio">Inicio</a>
+
+            <div class="dropdown">
+                <button>Especies de papaya ▾</button>
+                <div class="dropdown-content">
+                    <a href="#criolla">Papaya criolla</a>
+                    <a href="#maradol">Papaya Maradol</a>
+                    <a href="#ptm331">Papaya PTM 331</a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <button>Enfermedades ▾</button>
+                <div class="dropdown-content">
+                    <a href="#bacterial">Tizón bacteriano</a>
+                    <a href="#insectos">Daño por insectos</a>
+                    <a href="#necrotica">Mancha necrótica</a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <button>Soporte ▾</button>
+                <div class="dropdown-content">
+                    <a href="#guia">Guía</a>
+                    <a href="#chatbot">Habla con el chatbot</a>
+                    <a href="#contacto">Contáctanos</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- HERO -->
+    <main id="inicio" class="hero-section">
+        <div class="carousel">
+            <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=1600&q=80');"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1600&q=80');"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1600&q=80');"></div>
+        </div>
+
+        <div class="hero-overlay"></div>
+
+        <section class="hero-content">
+            <div class="hero-text">
+                <span class="badge">Sistema agropecuario inteligente</span>
+                <h1>MedPapaya</h1>
+                <p>
+                    Plataforma web para apoyar el diagnóstico visual de enfermedades
+                    en hojas de papaya mediante inteligencia artificial.
+                </p>
+            </div>
+
+            <section class="upload-card">
+                <h2>Analizar hojas de papaya</h2>
+                <p>Sube entre 1 y 50 imágenes para obtener un diagnóstico demostrativo.</p>
+
+                <label class="upload-box" for="imageInput">
+                    <span>📷 Seleccionar imágenes</span>
+                    <small>Formatos permitidos: JPG, PNG, JPEG o WEBP</small>
+                </label>
+
+                <input 
+                    type="file" 
+                    id="imageInput" 
+                    accept="image/png, image/jpeg, image/jpg, image/webp" 
+                    multiple 
+                    hidden
+                />
+
+                <div id="fileCounter" class="file-counter">No hay imágenes seleccionadas.</div>
+
+                <div class="button-group">
+                    <button id="analyzeBtn" class="primary-btn">Analizar imágenes</button>
+                    <button id="clearBtn" class="secondary-btn">Limpiar</button>
+                </div>
+
+                <div id="previewContainer" class="preview-container"></div>
+            </section>
+        </section>
+    </main>
+<section class="section light-section" id="gemini-opinion">
+    <div class="section-title">
+        <span>SEGUNDA OPINIÓN</span>
+        <h2>¿Resultado inferior al 51%?</h2>
+        <p>
+            Si el modelo MedPapaya obtiene una confianza baja o la imagen es difícil
+            de interpretar, puedes solicitar una segunda opinión usando Gemini.
+        </p>
+    </div>
+
+    <div class="gemini-standalone-card">
+        <h3>Analizar hoja con Gemini</h3>
+        <p>
+            Este módulo funciona como apoyo complementario. No reemplaza el modelo
+            entrenado de MedPapaya ni la evaluación de un especialista agrícola.
+        </p>
+
+        <label for="geminiImageInput" class="gemini-upload-box">
+            <span>🤖 Seleccionar imagen para Gemini</span>
+            <small>Formatos permitidos: JPG, PNG, JPEG o WEBP</small>
+        </label>
+
+        <input
+            type="file"
+            id="geminiImageInput"
+            accept="image/*"
+            hidden
+        >
+
+        <p id="geminiFileCounter" class="file-counter">
+            No hay imagen seleccionada para Gemini.
+        </p>
+
+        <div id="geminiPreviewContainer" class="gemini-preview-container"></div>
+
+        <div class="button-group">
+            <button id="geminiAnalyzeBtn" class="primary-btn" type="button">
+                Analizar con Gemini
+            </button>
+
+            <button id="geminiClearBtn" class="secondary-btn" type="button">
+                Limpiar Gemini
+            </button>
+        </div>
+
+        <div id="geminiLoadingBox" class="loading-box hidden">
+            Gemini está analizando la imagen. Espera unos segundos...
+        </div>
+
+        <div id="geminiStandaloneResult" class="gemini-standalone-result"></div>
+    </div>
+</section>
+    <!-- RESULTADOS -->
+    <section id="resultados" class="section">
+        <div class="section-title">
+            <span>Diagnóstico</span>
+            <h2>Resultados del análisis</h2>
+            <p>Los resultados aparecerán aquí después de procesar las imágenes.</p>
+        </div>
+
+        <div id="loadingBox" class="loading-box hidden">
+            Analizando imágenes, espera un momento...
+        </div>
+
+        <div id="resultsContainer" class="results-grid"></div>
+    </section>
+
+    <!-- QUE HACE -->
+    <section class="section light-section">
+        <div class="section-title">
+            <span>Función principal</span>
+            <h2>¿Qué hace MedPapaya?</h2>
+        </div>
+
+        <div class="info-grid">
+            <article class="info-card">
+                <h3>📤 Subida de imágenes</h3>
+                <p>
+                    Permite cargar fotografías de hojas de papaya desde una laptop
+                    o celular para iniciar el análisis.
+                </p>
+            </article>
+
+            <article class="info-card">
+                <h3>🧠 Modelo inteligente</h3>
+                <p>
+                    Usa un modelo entrenado con imágenes del dataset para clasificar
+                    posibles enfermedades o daños visibles.
+                </p>
+            </article>
+
+            <article class="info-card">
+                <h3>🌱 Recomendaciones</h3>
+                <p>
+                    Muestra una recomendación básica según la clase detectada,
+                    ayudando al agricultor a tomar una primera decisión.
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <!-- GUIA -->
+    <section id="guia" class="section">
+        <div class="section-title">
+            <span>Guía práctica</span>
+            <h2>Cómo tomar una buena foto</h2>
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <strong>1</strong>
+                <p>Usa buena iluminación natural.</p>
+            </div>
+
+            <div class="step">
+                <strong>2</strong>
+                <p>Enfoca una hoja completa y evita imágenes borrosas.</p>
+            </div>
+
+            <div class="step">
+                <strong>3</strong>
+                <p>Coloca la hoja sobre un fondo limpio.</p>
+            </div>
+
+            <div class="step">
+                <strong>4</strong>
+                <p>Evita mezclar varias hojas en una sola imagen.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ESPECIES -->
+    <section class="section light-section">
+        <div class="section-title">
+            <span>Información agrícola</span>
+            <h2>Especies o variedades de papaya</h2>
+        </div>
+
+        <div class="info-grid">
+            <article id="criolla" class="info-card">
+                <h3>Papaya criolla</h3>
+                <p>
+                    Variedad común en zonas tropicales. Es apreciada por su adaptación
+                    a climas cálidos y uso local en mercados regionales.
+                </p>
+            </article>
+
+            <article id="maradol" class="info-card">
+                <h3>Papaya Maradol</h3>
+                <p>
+                    Variedad de fruto grande, pulpa anaranjada y buena aceptación comercial.
+                    Es usada en cultivos con fines productivos.
+                </p>
+            </article>
+
+            <article id="ptm331" class="info-card">
+                <h3>Papaya PTM 331</h3>
+                <p>
+                    Variedad relacionada con producción agrícola tecnificada y adaptada
+                    a condiciones tropicales del Perú.
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <!-- ENFERMEDADES -->
+    <section class="section">
+        <div class="section-title">
+            <span>Sanidad vegetal</span>
+            <h2>Enfermedades y daños identificados</h2>
+        </div>
+
+        <div class="info-grid">
+            <article id="bacterial" class="info-card disease-card">
+                <h3>Tizón bacteriano</h3>
+                <p>
+                    Puede generar manchas, deterioro del tejido vegetal y debilitamiento
+                    progresivo de la hoja.
+                </p>
+            </article>
+
+            <article id="insectos" class="info-card disease-card">
+                <h3>Daño por insectos</h3>
+                <p>
+                    Se presenta mediante perforaciones, mordidas o zonas dañadas por
+                    plagas que afectan la superficie de la hoja.
+                </p>
+            </article>
+
+            <article id="necrotica" class="info-card disease-card">
+                <h3>Mancha necrótica amarilla</h3>
+                <p>
+                    Se reconoce por zonas amarillentas o deterioradas que pueden indicar
+                    daño avanzado del tejido foliar.
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <!-- HISTORIAL -->
+    <section class="section light-section">
+        <div class="section-title">
+            <span>Seguimiento</span>
+            <h2>Historial de análisis</h2>
+            <p>Últimos diagnósticos realizados durante esta sesión.</p>
+        </div>
+
+        <div id="historyContainer" class="history-list"></div>
+    </section>
+
+    <!-- FUNDADORES -->
+    <section class="section">
+        <div class="section-title">
+            <span>Equipo</span>
+            <h2>Miembros fundadores</h2>
+        </div>
+
+        <div class="founders-grid">
+            <article class="founder-card">
+                <div class="founder-photo">
+                    <img src="../assets/comp1.jpeg" alt="Foto del integrante 1">
+                </div>
+                <h3>Nombre aquí</h3>
+                <p>Integrante del equipo encargado del desarrollo y documentación del sistema.</p>
+            </article>
+
+            <article class="founder-card">
+                <div class="founder-photo">
+                    <img src="../assets/comp3.jpeg" alt="Foto del integrante 2">
+                </div>
+                <h3>Nombre aquí</h3>
+                <p>Integrante del equipo encargado del análisis, pruebas y presentación del proyecto.</p>
+            </article>
+
+            <article class="founder-card">
+                <div class="founder-photo">
+                    <img src="../assets/comp3.jpeg" alt="Foto provisional del integrante 3">
+                </div>
+                <h3>Nombre aquí</h3>
+                <p>Integrante del equipo encargado del diseño visual y validación funcional.</p>
+            </article>
+        </div>
+    </section>
+
+    <!-- SOPORTE -->
+    <section id="chatbot" class="section support-section">
+        <div class="section-title">
+            <span>Soporte</span>
+            <h2>Habla con el chatbot</h2>
+            <p>
+                Próximamente se integrará un chatbot para orientar al usuario sobre
+                enfermedades, recomendaciones y uso de la plataforma.
+            </p>
+        </div>
+
+        <a class="whatsapp-btn" href="https://wa.me/51987654321" target="_blank">
+            Consultar por WhatsApp
+        </a>
+    </section>
+
+    <!-- FOOTER -->
+    <footer id="contacto" class="footer">
+        <div>
+            <h3>MedPapaya</h3>
+            <p>Aplicación web agropecuaria para diagnóstico demostrativo de hojas de papaya.</p>
+        </div>
+
+        <div>
+            <h4>Correos</h4>
+            <p>soporte@Medpapaya.com</p>
+            <p>diagnostico@Medpapaya.com</p>
+            <p>contacto@Medpapaya.com</p>
+        </div>
+
+        <div>
+            <h4>Teléfonos</h4>
+            <p>Fijo: (082) 456789</p>
+            <p>Celular: +51 987 654 321</p>
+        </div>
+
+        <div>
+            <h4>Enlaces rápidos</h4>
+            <a href="#inicio">Inicio</a>
+            <a href="#resultados">Resultados</a>
+            <a href="#guia">Guía</a>
+            <a href="#contacto">Contáctanos</a>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

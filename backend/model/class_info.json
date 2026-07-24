@@ -1,0 +1,34 @@
+{
+    "Anthracnose": {
+        "label": "Antracnosis",
+        "recommendation": "Aislar las hojas con síntomas visibles, reducir la humedad prolongada y solicitar una evaluación fitosanitaria."
+    },
+    "BacterialSpot": {
+        "label": "Mancha bacteriana",
+        "recommendation": "Evitar mojar directamente el follaje, retirar material muy afectado y consultar a un especialista agrícola."
+    },
+    "Curl": {
+        "label": "Enrollamiento foliar",
+        "recommendation": "Revisar la presencia de vectores, estrés hídrico o nutricional y monitorear las hojas."
+    },
+    "Healthy": {
+        "label": "Hoja saludable",
+        "recommendation": "Mantener el monitoreo, el manejo adecuado del riego y las buenas prácticas agrícolas."
+    },
+    "Mealybug": {
+        "label": "Cochinilla harinosa",
+        "recommendation": "Inspeccionar tallos y hojas cercanas, aislar focos visibles y aplicar manejo integrado de plagas."
+    },
+    "Mite_Disease": {
+        "label": "Daño por ácaros",
+        "recommendation": "Revisar el envés de las hojas, controlar focos tempranos y consultar sobre manejo integrado de ácaros."
+    },
+    "Mosaic": {
+        "label": "Mosaico de la papaya",
+        "recommendation": "Aislar plantas con síntomas sospechosos, controlar posibles vectores y solicitar una evaluación fitosanitaria."
+    },
+    "RingSpot": {
+        "label": "Mancha anular",
+        "recommendation": "Aislar plantas con síntomas compatibles, controlar vectores y solicitar confirmación de un especialista."
+    }
+}
