@@ -1,0 +1,156 @@
+name: 🌱 Calidad MedPapaya
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  calidad:
+    name: 🧪 Auditoría de Calidad
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+
+      # =====================================================
+      # OBTENER PROYECTO
+      # =====================================================
+
+      - name: 📥 Descargar código
+        uses: actions/checkout@v6
+
+
+      # =====================================================
+      # PYTHON
+      # =====================================================
+
+      - name: 🐍 Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+
+      # =====================================================
+      # DEPENDENCIAS
+      # =====================================================
+
+      - name: 📦 Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov httpx radon
+
+
+      # =====================================================
+      # PYTEST + COVERAGE
+      # =====================================================
+
+      - name: 🧪 Ejecutar Pytest y Coverage
+        id: pytest
+        continue-on-error: true
+        run: |
+          python -m pytest tests -v \
+            --cov=backend \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-report=html
+
+
+      # =====================================================
+      # RADON
+      # =====================================================
+
+      - name: 🧠 Analizar complejidad ciclomática
+        id: radon
+        continue-on-error: true
+        run: |
+          radon cc backend/main.py -s -a | tee radon_cc.txt
+          radon mi backend/main.py -s | tee radon_mi.txt
+
+
+      # =====================================================
+      # PANEL VISUAL
+      # =====================================================
+
+      - name: 📊 Crear Panel de Calidad
+        if: always()
+        shell: bash
+        run: |
+
+          COVERAGE=$(python -m coverage report 2>/dev/null | awk '/TOTAL/ {print $NF}')
+
+          if [ -z "$COVERAGE" ]; then
+            COVERAGE="N/D"
+          fi
+
+          COMPLEXITY=$(tail -n 1 radon_cc.txt 2>/dev/null || echo "N/D")
+          MAINTAINABILITY=$(cat radon_mi.txt 2>/dev/null || echo "N/D")
+
+          if [ "${{ steps.pytest.outcome }}" = "success" ]; then
+            TEST_STATUS="✅ Aprobado"
+          else
+            TEST_STATUS="❌ Falló"
+          fi
+
+          {
+            echo "# 🌱 MedPapaya — Panel de Calidad"
+            echo ""
+            echo "## 📊 Resumen"
+            echo ""
+            echo "| Evaluación | Resultado |"
+            echo "|---|---|"
+            echo "| 🧪 Pytest | $TEST_STATUS |"
+            echo "| 📈 Cobertura | **$COVERAGE** |"
+            echo "| 🧠 Complejidad ciclomática | \`$COMPLEXITY\` |"
+            echo "| 🔧 Maintainability Index | \`$MAINTAINABILITY\` |"
+            echo "| 🌐 Selenium | ⏳ Próxima fase |"
+            echo "| ⚡ JMeter | ⏳ Próxima fase |"
+            echo "| 🔍 SonarCloud | ⏳ Próxima fase |"
+            echo ""
+            echo "## 🧪 Pruebas implementadas"
+            echo ""
+            echo "- Pruebas unitarias"
+            echo "- Pruebas de integración"
+            echo "- Cobertura del backend"
+            echo "- Complejidad ciclomática"
+            echo "- Índice de mantenibilidad"
+            echo ""
+            echo "## 📦 Evidencias"
+            echo ""
+            echo "Los reportes completos se encuentran disponibles en los Artifacts de esta ejecución."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+
+      # =====================================================
+      # ARTEFACTOS
+      # =====================================================
+
+      - name: 📦 Guardar reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-calidad-medpapaya
+          if-no-files-found: warn
+          path: |
+            coverage.xml
+            htmlcov/
+            radon_cc.txt
+            radon_mi.txt
+
+
+      # =====================================================
+      # ESTADO FINAL
+      # =====================================================
+
+      - name: ✅ Validar resultado final
+        if: steps.pytest.outcome == 'failure'
+        run: |
+          echo "Una o más pruebas Pytest fallaron."
+          exit 1
