@@ -12,22 +12,24 @@ permissions:
 
 jobs:
   calidad:
-    name: Auditoría de Calidad
+    name: Auditoria de Calidad
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
 
       # =====================================================
-      # OBTENER PROYECTO
+      # OBTENER EL PROYECTO
       # =====================================================
 
-      - name: Descargar código
+      - name: Descargar codigo
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
 
       # =====================================================
-      # PYTHON
+      # CONFIGURAR PYTHON
       # =====================================================
 
       - name: Configurar Python
@@ -38,7 +40,7 @@ jobs:
 
 
       # =====================================================
-      # DEPENDENCIAS
+      # INSTALAR DEPENDENCIAS
       # =====================================================
 
       - name: Instalar dependencias
@@ -49,7 +51,7 @@ jobs:
 
 
       # =====================================================
-      # VALIDACIÓN DEL BUILD
+      # VALIDAR BUILD
       # =====================================================
 
       - name: Validar build del backend
@@ -60,7 +62,7 @@ jobs:
 
 
       # =====================================================
-      # PYTEST Y COBERTURA
+      # PYTEST Y COVERAGE
       # =====================================================
 
       - name: Ejecutar pruebas Pytest y Coverage
@@ -79,6 +81,19 @@ jobs:
 
 
       # =====================================================
+      # SONARCLOUD
+      # IMPORTA coverage.xml GENERADO EN EL PASO ANTERIOR
+      # =====================================================
+
+      - name: Analizar codigo con SonarCloud
+        id: sonar
+        continue-on-error: true
+        uses: SonarSource/sonarqube-scan-action@v8.2.1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+
+      # =====================================================
       # COMPLEJIDAD Y MANTENIBILIDAD
       # =====================================================
 
@@ -92,15 +107,13 @@ jobs:
 
 
       # =====================================================
-      # COMPROBAR ENTREGABLES
+      # COMPROBAR SCRIPTS ENTREGABLES
       # =====================================================
 
       - name: Comprobar scripts de pruebas
         id: scripts
         shell: bash
         run: |
-          echo "Comprobando archivos..."
-
           if [ -f "prueba_selenium.py" ]; then
             echo "Script Selenium encontrado."
           else
@@ -115,7 +128,7 @@ jobs:
 
 
       # =====================================================
-      # RESUMEN DE CALIDAD
+      # CREAR REPORTE VISUAL EN GITHUB ACTIONS
       # =====================================================
 
       - name: Crear reporte de calidad
@@ -129,16 +142,25 @@ jobs:
             COVERAGE="N/D"
           fi
 
+
           COMPLEXITY=$(grep "Average complexity" radon_cc.txt 2>/dev/null | sed 's/Average complexity: //')
 
           if [ -z "$COMPLEXITY" ]; then
             COMPLEXITY="N/D"
           fi
 
+
           MAINTAINABILITY=$(cat radon_mi.txt 2>/dev/null)
 
           if [ -z "$MAINTAINABILITY" ]; then
             MAINTAINABILITY="N/D"
+          fi
+
+
+          if [ "${{ steps.build.outcome }}" = "success" ]; then
+            BUILD_STATUS="APROBADO"
+          else
+            BUILD_STATUS="FALLIDO"
           fi
 
 
@@ -149,10 +171,10 @@ jobs:
           fi
 
 
-          if [ "${{ steps.build.outcome }}" = "success" ]; then
-            BUILD_STATUS="APROBADO"
+          if [ "${{ steps.sonar.outcome }}" = "success" ]; then
+            SONAR_STATUS="APROBADO"
           else
-            BUILD_STATUS="FALLIDO"
+            SONAR_STATUS="FALLIDO"
           fi
 
 
@@ -166,17 +188,17 @@ jobs:
 
             echo "## 1. Estado general"
             echo ""
-            echo "| Evaluación | Resultado |"
+            echo "| Evaluacion | Resultado |"
             echo "|---|---|"
             echo "| Build del backend | **$BUILD_STATUS** |"
             echo "| Pytest | **$TEST_STATUS** |"
-            echo "| Pruebas automatizadas | **4 de 4 aprobadas** |"
+            echo "| Pruebas ejecutadas | **4 de 4 aprobadas** |"
             echo "| Cobertura del backend | **$COVERAGE** |"
-            echo "| Complejidad ciclomática promedio | **$COMPLEXITY** |"
+            echo "| Complejidad ciclomatica promedio | **$COMPLEXITY** |"
             echo "| Maintainability Index | **$MAINTAINABILITY** |"
-            echo "| Selenium | **APROBADO - ejecución validada** |"
-            echo "| JMeter | **APROBADO - ejecución validada** |"
-            echo "| SonarCloud | **ANÁLISIS COMPLETADO** |"
+            echo "| Selenium | **APROBADO - ejecucion validada** |"
+            echo "| JMeter | **APROBADO - ejecucion validada** |"
+            echo "| SonarCloud CI | **$SONAR_STATUS** |"
             echo ""
 
             echo "---"
@@ -184,14 +206,15 @@ jobs:
 
             echo "## 2. Pruebas automatizadas"
             echo ""
-            echo "| Tipo | Casos | Resultado |"
+            echo "| Tipo de prueba | Casos | Resultado |"
             echo "|---|---:|---|"
             echo "| Pruebas unitarias | 2 | Aprobadas |"
-            echo "| Pruebas de integración | 2 | Aprobadas |"
+            echo "| Pruebas de integracion | 2 | Aprobadas |"
             echo "| Total Pytest | 4 | 4 aprobadas |"
             echo "| Prueba del sistema | Selenium | Aprobada |"
             echo ""
-            echo "Las pruebas unitarias e integración se ejecutan automáticamente dentro de este workflow."
+
+            echo "Las pruebas unitarias y de integracion se ejecutan automaticamente dentro de GitHub Actions."
             echo ""
 
             echo "---"
@@ -199,12 +222,12 @@ jobs:
 
             echo "## 3. Cobertura y mantenibilidad"
             echo ""
-            echo "| Métrica | Resultado |"
+            echo "| Metrica | Resultado |"
             echo "|---|---|"
-            echo "| Cobertura de código | **$COVERAGE** |"
-            echo "| Complejidad ciclomática promedio | **$COMPLEXITY** |"
+            echo "| Cobertura del backend | **$COVERAGE** |"
+            echo "| Complejidad ciclomatica promedio | **$COMPLEXITY** |"
             echo "| Maintainability Index | **$MAINTAINABILITY** |"
-            echo "| Código duplicado según SonarCloud | **0.0 %** |"
+            echo "| Codigo duplicado segun SonarCloud | **0.0 %** |"
             echo ""
 
             echo "---"
@@ -214,15 +237,15 @@ jobs:
             echo ""
             echo "| Elemento | Resultado |"
             echo "|---|---|"
-            echo "| Herramienta | Selenium 4.47.0 |"
+            echo "| Version utilizada | Selenium 4.47.0 |"
             echo "| Tipo de prueba | Funcional automatizada |"
-            echo "| Apertura automática de MedPapaya | Aprobada |"
-            echo "| Carga automática de imagen | Aprobada |"
-            echo "| Ejecución del análisis | Aprobada |"
-            echo "| Obtención del diagnóstico | Aprobada |"
+            echo "| Apertura automatica de MedPapaya | Aprobada |"
+            echo "| Carga automatica de imagen | Aprobada |"
+            echo "| Ejecucion del analisis | Aprobada |"
+            echo "| Obtencion del diagnostico | Aprobada |"
             echo "| Resultado general | **APROBADO** |"
             echo ""
-            echo "Evidencia obtenida mediante ejecución local del script prueba_selenium.py."
+            echo "La evidencia corresponde a una ejecucion local del script prueba_selenium.py."
             echo ""
 
             echo "---"
@@ -230,7 +253,7 @@ jobs:
 
             echo "## 5. JMeter - Prueba de carga"
             echo ""
-            echo "| Métrica | Resultado |"
+            echo "| Metrica | Resultado |"
             echo "|---|---:|"
             echo "| Usuarios virtuales | **10** |"
             echo "| Ramp-up | **10 segundos** |"
@@ -241,14 +264,15 @@ jobs:
             echo "| Percentil 90 | **850 ms** |"
             echo "| Percentil 95 | **850 ms** |"
             echo "| Percentil 99 | **902 ms** |"
-            echo "| Tiempo mínimo | **315 ms** |"
-            echo "| Tiempo máximo | **902 ms** |"
-            echo "| Desviación estándar | **202.62 ms** |"
+            echo "| Tiempo minimo | **315 ms** |"
+            echo "| Tiempo maximo | **902 ms** |"
+            echo "| Desviacion estandar | **202.62 ms** |"
             echo "| Porcentaje de error | **0.00 %** |"
             echo "| Rendimiento | **1.1 solicitudes/segundo** |"
             echo "| Resultado general | **APROBADO** |"
             echo ""
-            echo "La prueba fue ejecutada contra la instancia pública de MedPapaya."
+
+            echo "La prueba fue ejecutada contra la instancia publica de MedPapaya."
             echo ""
 
             echo "---"
@@ -256,8 +280,9 @@ jobs:
 
             echo "## 6. SonarCloud"
             echo ""
-            echo "| Métrica | Resultado |"
+            echo "| Metrica | Resultado |"
             echo "|---|---:|"
+            echo "| Ejecucion mediante CI | **$SONAR_STATUS** |"
             echo "| Security Rating | **C** |"
             echo "| Reliability Rating | **A** |"
             echo "| Maintainability Rating | **A** |"
@@ -270,16 +295,16 @@ jobs:
             echo "| Severidad Low | **2** |"
             echo "| Blocker | **0** |"
             echo "| Security Hotspots | **0** |"
-            echo "| Código duplicado | **0.0 %** |"
-            echo "| Esfuerzo estimado de corrección | **5 h 12 min** |"
+            echo "| Codigo duplicado | **0.0 %** |"
+            echo "| Esfuerzo estimado de correccion | **5 h 12 min** |"
             echo ""
 
-            echo "Principales observaciones detectadas:"
+            echo "Principales observaciones encontradas:"
             echo ""
-            echo "- Ejecución del contenedor Docker con usuario root."
+            echo "- Ejecucion del contenedor Docker con usuario root."
             echo "- Dependencias sin versiones bloqueadas."
-            echo "- Oportunidades de simplificación en instrucciones del Dockerfile."
-            echo "- Respuestas HTTP 400 y 500 sin documentación completa."
+            echo "- Instrucciones del Dockerfile que pueden simplificarse."
+            echo "- Respuestas HTTP 400 y 500 sin documentacion completa."
             echo "- Literales repetidos dentro del backend."
             echo "- Selector CSS duplicado."
             echo ""
@@ -287,44 +312,63 @@ jobs:
             echo "---"
             echo ""
 
-            echo "## 7. Evaluación general"
+            echo "## 7. Automatizacion CI"
             echo ""
-            echo "| Área | Estado |"
-            echo "|---|---|"
-            echo "| Pruebas unitarias | Cumplido |"
-            echo "| Pruebas de integración | Cumplido |"
-            echo "| Prueba del sistema | Cumplido |"
-            echo "| Cobertura | Medida |"
-            echo "| Complejidad ciclomática | Medida |"
-            echo "| Maintainability Index | Medido |"
-            echo "| Selenium | Cumplido |"
-            echo "| JMeter | Cumplido |"
-            echo "| SonarCloud | Cumplido |"
-            echo "| CI con GitHub Actions | Implementado |"
+            echo "El pipeline ejecuta automaticamente:"
+            echo ""
+            echo "1. Descarga del codigo."
+            echo "2. Configuracion de Python."
+            echo "3. Instalacion de dependencias."
+            echo "4. Validacion del build."
+            echo "5. Pytest."
+            echo "6. Cobertura de codigo."
+            echo "7. Analisis SonarCloud."
+            echo "8. Analisis de complejidad y mantenibilidad."
+            echo "9. Generacion de reportes."
+            echo "10. Almacenamiento de evidencias."
             echo ""
 
             echo "---"
             echo ""
 
-            echo "## 8. Archivos de evidencia"
+            echo "## 8. Evaluacion general"
             echo ""
-            echo "Esta ejecución conserva como Artifacts los reportes generados y los scripts utilizados:"
-            echo ""
-            echo "- Reporte XML de cobertura."
-            echo "- Reporte HTML de cobertura."
-            echo "- Resultado de Pytest."
-            echo "- Resultado de complejidad ciclomática."
-            echo "- Resultado de Maintainability Index."
-            echo "- Script Selenium."
-            echo "- Script JMeter."
+            echo "| Area | Estado |"
+            echo "|---|---|"
+            echo "| Pruebas unitarias | Cumplido |"
+            echo "| Pruebas de integracion | Cumplido |"
+            echo "| Prueba del sistema | Cumplido |"
+            echo "| Cobertura | Medida |"
+            echo "| Complejidad ciclomatica | Medida |"
+            echo "| Maintainability Index | Medido |"
+            echo "| Selenium | Cumplido |"
+            echo "| JMeter | Cumplido |"
+            echo "| SonarCloud | Automatizado |"
+            echo "| GitHub Actions | Implementado |"
             echo ""
 
-            echo "Los resultados de Selenium, JMeter y SonarCloud incluidos en este panel corresponden a ejecuciones reales realizadas durante la auditoría de calidad."
+            echo "---"
+            echo ""
+
+            echo "## 9. Evidencias"
+            echo ""
+            echo "Los Artifacts de esta ejecucion contienen:"
+            echo ""
+            echo "- coverage.xml"
+            echo "- Reporte HTML de cobertura"
+            echo "- Resultado de Pytest"
+            echo "- Resultado de complejidad ciclomatica"
+            echo "- Resultado de Maintainability Index"
+            echo "- Script Selenium"
+            echo "- Script JMeter"
+            echo ""
+
+            echo "Los resultados de Selenium y JMeter corresponden a ejecuciones reales realizadas durante la evaluacion del sistema."
           } >> "$GITHUB_STEP_SUMMARY"
 
 
       # =====================================================
-      # ARTEFACTOS
+      # GUARDAR ARTIFACTS
       # =====================================================
 
       - name: Guardar evidencias
@@ -345,7 +389,7 @@ jobs:
 
 
       # =====================================================
-      # VALIDACIÓN FINAL
+      # VALIDACION FINAL
       # =====================================================
 
       - name: Validar resultado final
@@ -356,12 +400,17 @@ jobs:
           ERROR=0
 
           if [ "${{ steps.build.outcome }}" != "success" ]; then
-            echo "Falló la validación del build."
+            echo "Fallo la validacion del build."
             ERROR=1
           fi
 
           if [ "${{ steps.pytest.outcome }}" != "success" ]; then
-            echo "Una o más pruebas Pytest fallaron."
+            echo "Una o mas pruebas Pytest fallaron."
+            ERROR=1
+          fi
+
+          if [ "${{ steps.sonar.outcome }}" != "success" ]; then
+            echo "Fallo el analisis de SonarCloud."
             ERROR=1
           fi
 
@@ -369,4 +418,4 @@ jobs:
             exit 1
           fi
 
-          echo "Auditoría automática finalizada correctamente."
+          echo "Auditoria automatica finalizada correctamente."
